@@ -4,8 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
+	_ "github.com/mishazigelboim/gocrawl/docs"
 	"github.com/mishazigelboim/gocrawl/handlers"
+
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -40,14 +42,15 @@ func main() {
 		c.JSON(200, gin.H{"status": "ready"})
 	})
 
+	// Swagger documentation at root
+	r.GET("/", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// API routes
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/crawl", crawlHandler.CrawlModel)
 	}
-
-	// Swagger documentation
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Start server
 	port := os.Getenv("PORT")

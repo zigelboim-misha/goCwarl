@@ -30,6 +30,9 @@ WORKDIR /root/
 # Copy the binary from builder
 COPY --from=builder /app/gocrawl .
 
+# Copy the generated Swagger docs from builder
+COPY --from=builder /app/docs ./docs
+
 # Expose port
 EXPOSE 8080
 
