@@ -93,16 +93,23 @@ func (pm *PodManager) CreateCrawlPod(ctx context.Context, podName string) (*core
 
 // WaitForPodReady waits for the pod to be ready with a timeout
 func (pm *PodManager) WaitForPodReady(ctx context.Context, podName string, timeout time.Duration) error {
+	fmt.Printf("[K8S] Polling for pod %s readiness...\n", podName)
 	return wait.PollUntilContextTimeout(ctx, 2*time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		pod, err := pm.clientset.CoreV1().Pods(pm.namespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil {
+			fmt.Printf("[K8S] Error getting pod %s: %v\n", podName, err)
 			return false, err
 		}
+
+		fmt.Printf("[K8S] Pod %s - Phase: %s\n", podName, pod.Status.Phase)
 
 		// Check if pod is running and ready
 		if pod.Status.Phase == corev1.PodRunning {
 			for _, condition := range pod.Status.Conditions {
+				fmt.Printf("[K8S] Pod %s - Condition: %s = %s (Reason: %s, Message: %s)\n",
+					podName, condition.Type, condition.Status, condition.Reason, condition.Message)
 				if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
+					fmt.Printf("[K8S] Pod %s is ready!\n", podName)
 					return true, nil
 				}
 			}
@@ -110,7 +117,22 @@ func (pm *PodManager) WaitForPodReady(ctx context.Context, podName string, timeo
 
 		// Check if pod failed
 		if pod.Status.Phase == corev1.PodFailed {
-			return false, fmt.Errorf("pod failed to start")
+			fmt.Printf("[K8S] Pod %s failed! Reason: %s\n", podName, pod.Status.Reason)
+			return false, fmt.Errorf("pod failed to start: %s", pod.Status.Reason)
+		}
+
+		// Log container statuses
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			fmt.Printf("[K8S] Container %s - Ready: %v, Started: %v\n",
+				containerStatus.Name, containerStatus.Ready, *containerStatus.Started)
+			if containerStatus.State.Waiting != nil {
+				fmt.Printf("[K8S] Container %s waiting: %s - %s\n",
+					containerStatus.Name, containerStatus.State.Waiting.Reason, containerStatus.State.Waiting.Message)
+			}
+			if containerStatus.State.Terminated != nil {
+				fmt.Printf("[K8S] Container %s terminated: %s - %s\n",
+					containerStatus.Name, containerStatus.State.Terminated.Reason, containerStatus.State.Terminated.Message)
+			}
 		}
 
 		return false, nil

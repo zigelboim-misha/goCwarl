@@ -60,51 +60,70 @@ func (h *CrawlHandler) CrawlModel(c *gin.Context) {
 
 	// Generate unique pod name
 	podName := fmt.Sprintf("crawl4ai-%d", time.Now().Unix())
+	fmt.Printf("[%s] Starting crawl request for model: %s\n", podName, req.Model)
 
 	// Create the pod
+	fmt.Printf("[%s] Creating pod...\n", podName)
 	_, err := h.podManager.CreateCrawlPod(ctx, podName)
 	if err != nil {
+		fmt.Printf("[%s] ERROR: Failed to create pod: %v\n", podName, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: fmt.Sprintf("failed to create pod: %v", err),
 		})
 		return
 	}
+	fmt.Printf("[%s] Pod created successfully\n", podName)
 
 	// Ensure pod is deleted after request completes
 	defer func() {
+		fmt.Printf("[%s] Cleaning up pod...\n", podName)
 		deleteCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := h.podManager.DeletePod(deleteCtx, podName); err != nil {
 			// Log error but don't fail the request
-			fmt.Printf("failed to delete pod %s: %v\n", podName, err)
+			fmt.Printf("[%s] ERROR: Failed to delete pod: %v\n", podName, err)
+		} else {
+			fmt.Printf("[%s] Pod deleted successfully\n", podName)
 		}
 	}()
 
 	// Wait for pod to be ready (max 2 minutes)
+	fmt.Printf("[%s] Waiting for pod to be ready (max 2 minutes)...\n", podName)
 	if err := h.podManager.WaitForPodReady(ctx, podName, 2*time.Minute); err != nil {
+		fmt.Printf("[%s] ERROR: Pod failed to become ready: %v\n", podName, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: fmt.Sprintf("pod failed to become ready: %v", err),
 		})
 		return
 	}
+	fmt.Printf("[%s] Pod is ready\n", podName)
 
 	// Get pod IP
 	podIP, err := h.podManager.GetPodIP(ctx, podName)
 	if err != nil {
+		fmt.Printf("[%s] ERROR: Failed to get pod IP: %v\n", podName, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: fmt.Sprintf("failed to get pod IP: %v", err),
 		})
 		return
 	}
+	fmt.Printf("[%s] Pod IP: %s\n", podName, podIP)
+
+	// Add a delay to allow the service inside the pod to start
+	fmt.Printf("[%s] Waiting 10 seconds for crawl4ai service to start...\n", podName)
+	time.Sleep(10 * time.Second)
 
 	// Make request to crawl4ai
+	fmt.Printf("[%s] Making crawl request to http://%s:11235/crawl\n", podName, podIP)
 	crawlResp, err := h.makeCrawlRequest(ctx, podIP, req.Model)
 	if err != nil {
+		fmt.Printf("[%s] ERROR: Crawl request failed: %v\n", podName, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: fmt.Sprintf("crawl request failed: %v", err),
 		})
 		return
 	}
+	fmt.Printf("[%s] Crawl request successful\n", podName)
 
 	// Filter and return response
 	if len(crawlResp.Results) == 0 {
