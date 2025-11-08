@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: gocrawl
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+serviceAccount:
+  create: true
+  name: gocrawl
+
+rbac:
+  create: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
