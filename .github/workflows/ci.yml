@@ -30,7 +30,7 @@ jobs:
 
   create-container:
     name: Push container image to the GitHub container registry
-    needs: swagger-build
+    needs: golang-test
     if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
