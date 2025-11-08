@@ -1,0 +1,62 @@
+name: Vaticy Integrations
+run-name: Running pipeline for ${{ github.actor }}`s push
+
+on:
+  push:
+    paths:
+      - '**/*.go'
+      - '**/*.mod'
+      - '**/*.sum'
+      - '.github/workflows/ci.yml'
+      - 'Dockerfile'
+
+jobs:
+  golang-test:
+    name: Building and testing all Golang files
+    runs-on: ubuntu-latest
+    # Run this job only on branches other than main and tags
+    if: github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: go mod download
+      - name: Lint .go files
+        run: go vet ./...
+
+  create-container:
+    name: Push container image to the GitHub container registry
+    needs: swagger-build
+    if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Download Swagger docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: swagger-docs
+          path: docs/
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          push: true
+          context: .
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/gocrawl:${{ github.ref_name }}
+      - name: Get image digest
+        id: image_digest
+        run: |
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository_owner }}/gocrawl:${{ github.ref_name }} | awk -F '@' '{print $2}')
+          echo "::set-output name=digest::$IMAGE_DIGEST"
