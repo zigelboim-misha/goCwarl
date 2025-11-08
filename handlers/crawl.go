@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -167,7 +168,7 @@ func (h *CrawlHandler) makeCrawlRequest(ctx context.Context, podIP, model string
 					"snapchat.com",
 					"reddit.com",
 				},
-				ExcludeTags:             []string{"scripts", "style"},
+				ExcludeTags:             []string{"script", "style"},
 				DelayBeforeReturnHTML:   10.0,
 				ExcludeExternalLinks:    true,
 				ExcludeSocialMediaLinks: true,
@@ -201,7 +202,8 @@ func (h *CrawlHandler) makeCrawlRequest(ctx context.Context, podIP, model string
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("crawl4ai returned status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("crawl4ai returned status: %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	var crawlResp models.Crawl4AIResponse

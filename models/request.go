@@ -20,7 +20,7 @@ type ConfigParams struct {
 	ScrapingStrategy          ScrapingStrategy `json:"scraping_strategy"`
 	TableExtraction           TableExtraction  `json:"table_extraction"`
 	ExcludeSocialMediaDomains []string         `json:"exclude_social_media_domains"`
-	ExcludeTags               []string         `json:"exclude_tags,omitempty"`
+	ExcludeTags               []string         `json:"excluded_tags,omitempty"`
 	DelayBeforeReturnHTML     float32          `json:"delay_before_return_html,omitempty"`
 	ExcludeExternalLinks      bool             `json:"exclude_external_links,omitempty"`
 	ExcludeSocialMediaLinks   bool             `json:"exclude_social_media_links,omitempty"`
