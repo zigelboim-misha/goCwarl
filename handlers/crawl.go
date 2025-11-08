@@ -167,6 +167,10 @@ func (h *CrawlHandler) makeCrawlRequest(ctx context.Context, podIP, model string
 					"snapchat.com",
 					"reddit.com",
 				},
+				ExcludeTags:             []string{"scripts", "style"},
+				DelayBeforeReturnHTML:   10.0,
+				ExcludeExternalLinks:    true,
+				ExcludeSocialMediaLinks: true,
 			},
 		},
 	}
