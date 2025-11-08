@@ -33,11 +33,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Download Swagger docs artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: swagger-docs
-          path: docs/
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
