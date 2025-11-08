@@ -1,0 +1,95 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for crawling AI model pages using dynamic crawl4ai pods",
+        "title": "goCrawl API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/crawl": {
+            "post": {
+                "description": "Creates a temporary crawl4ai pod, crawls the OpenRouter model page, and returns filtered results",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "crawl"
+                ],
+                "summary": "Crawl an AI model page",
+                "parameters": [
+                    {
+                        "description": "Crawl Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CrawlRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CrawlResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.CrawlRequest": {
+            "type": "object",
+            "required": [
+                "model"
+            ],
+            "properties": {
+                "model": {
+                    "type": "string",
+                    "example": "anthropic/claude-3-opus"
+                }
+            }
+        },
+        "models.CrawlResponse": {
+            "type": "object",
+            "properties": {
+                "markdown": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

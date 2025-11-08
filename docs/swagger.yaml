@@ -1,0 +1,63 @@
+basePath: /
+definitions:
+  models.CrawlRequest:
+    properties:
+      model:
+        example: anthropic/claude-3-opus
+        type: string
+    required:
+    - model
+    type: object
+  models.CrawlResponse:
+    properties:
+      markdown:
+        type: string
+      success:
+        type: boolean
+      url:
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for crawling AI model pages using dynamic crawl4ai pods
+  title: goCrawl API
+  version: "1.0"
+paths:
+  /api/v1/crawl:
+    post:
+      consumes:
+      - application/json
+      description: Creates a temporary crawl4ai pod, crawls the OpenRouter model page,
+        and returns filtered results
+      parameters:
+      - description: Crawl Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CrawlRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CrawlResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Crawl an AI model page
+      tags:
+      - crawl
+swagger: "2.0"
