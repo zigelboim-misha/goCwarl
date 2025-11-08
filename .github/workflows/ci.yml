@@ -14,8 +14,6 @@ jobs:
   golang-test:
     name: Building and testing all Golang files
     runs-on: ubuntu-latest
-    # Run this job only on branches other than main and tags
-    if: github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -31,7 +29,6 @@ jobs:
   create-container:
     name: Push container image to the GitHub container registry
     needs: golang-test
-    if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
